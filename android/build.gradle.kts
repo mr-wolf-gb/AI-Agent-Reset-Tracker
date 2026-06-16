@@ -1,7 +1,6 @@
 allprojects {
     repositories {
         google()
-        html()
         mavenCentral()
     }
 }
@@ -20,18 +19,6 @@ subprojects {
 
 // Global configuration override for app and external plugins
 subprojects {
-    afterEvaluate {
-        // Look for Android apps or library modules (like plugins) and force Java 17
-        if (plugins.hasPlugin("com.android.application") || plugins.hasPlugin("com.android.library")) {
-            extensions.configure<com.android.build.gradle.BaseExtension> {
-                compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
-                }
-            }
-        }
-    }
-
     // Force Kotlin compiler tasks to target JVM 17
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
@@ -39,7 +26,7 @@ subprojects {
         }
     }
 
-    // Force standalone Java compiler tasks to target Java 17
+    // Force all Java compiler tasks (including plugins) to target Java 17
     tasks.withType<JavaCompile>().configureEach {
         sourceCompatibility = "17"
         targetCompatibility = "17"
