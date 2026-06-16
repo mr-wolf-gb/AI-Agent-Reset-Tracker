@@ -63,7 +63,7 @@ jobs:
         run: flutter test
 
   build-android:
-    needs: test
+    needs: [check-version, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -110,7 +110,7 @@ jobs:
           retention-days: 5
 
   build-ios:
-    needs: test
+    needs: [check-version, test]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
