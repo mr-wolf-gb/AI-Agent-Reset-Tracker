@@ -9,7 +9,6 @@ linter:
 
 analyzer:
   errors:
-    deprecated_member_use: ignore\n    unused_import: ignore\n    prefer_const_constructors: ignore\n    prefer_const_literals_to_create_immutables: ignore
     invalid_annotation_target: ignore
     deprecated_member_use: ignore
     unused_import: ignore
