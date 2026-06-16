@@ -1,0 +1,180 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pubspec.yaml'
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      build_num: ${{ steps.ver.outputs.build_num }}
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Extract version from pubspec.yaml
+        id: ver
+        run: |
+          FULL=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          SEMVER=$(echo $FULL | cut -d'+' -f1)
+          BUILD=$(echo $FULL | cut -d'+' -f2)
+          echo "version=$SEMVER" >> $GITHUB_OUTPUT
+          echo "build_num=$BUILD" >> $GITHUB_OUTPUT
+          echo "Detected version: $SEMVER+$BUILD"
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          TAG="v${{ steps.ver.outputs.version }}"
+          if git tag | grep -qx "$TAG"; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG exists — skipping release"
+          else
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "New tag $TAG — will release"
+          fi
+
+  test:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
+
+  build-android:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: |
+          flutter build apk --release \
+            --build-name=${{ needs.check-version.outputs.version }} \
+            --build-number=${{ needs.check-version.outputs.build_num }}
+
+      - name: Build release App Bundle
+        run: |
+          flutter build appbundle --release \
+            --build-name=${{ needs.check-version.outputs.version }} \
+            --build-number=${{ needs.check-version.outputs.build_num }}
+
+      - name: Rename artifacts
+        run: |
+          VERSION=${{ needs.check-version.outputs.version }}
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             AgentVault-v${VERSION}.apk
+          cp build/app/outputs/bundle/release/app-release.aab \
+             AgentVault-v${VERSION}.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: |
+            AgentVault-v${{ needs.check-version.outputs.version }}.apk
+            AgentVault-v${{ needs.check-version.outputs.version }}.aab
+          retention-days: 5
+
+  build-ios:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        run: cd ios && pod install --repo-update
+        continue-on-error: true
+
+      - name: Build iOS (no code signing)
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-name=${{ needs.check-version.outputs.version }} \
+            --build-number=${{ needs.check-version.outputs.build_num }}
+
+      - name: Package as IPA
+        run: |
+          VERSION=${{ needs.check-version.outputs.version }}
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          APP=$(ls -d *.app | head -1)
+          cp -r "$APP" Payload/
+          zip -r "AgentVault-v${VERSION}.ipa" Payload/
+          mv "AgentVault-v${VERSION}.ipa" ../../../
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: AgentVault-v${{ needs.check-version.outputs.version }}.ipa
+          retention-days: 5
+
+  release:
+    needs: [check-version, build-android, build-ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-build
+          path: release-artifacts
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-build
+          path: release-artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: AgentVault v${{ needs.check-version.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: release-artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
