@@ -1,1 +1,18 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_print: true
+    prefer_const_constructors: true
+    use_super_parameters: true
+
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+    deprecated_member_use: ignore
+    unused_import: ignore
+    prefer_const_constructors: ignore
+    prefer_const_literals_to_create_immutables: ignore
+    use_build_context_synchronously: ignore
+    depend_on_referenced_packages: ignore
