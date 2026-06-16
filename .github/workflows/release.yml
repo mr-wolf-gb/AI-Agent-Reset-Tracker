@@ -22,7 +22,7 @@ jobs:
       - name: Extract version from pubspec.yaml
         id: ver
         run: |
-          FULL=$(grep '^version:' pubspec.yaml | sed 's/version: //' | xargs)
+          FULL=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
           SEMVER=$(echo $FULL | cut -d'+' -f1)
           BUILD=$(echo $FULL | cut -d'+' -f2)
           echo "version=$SEMVER" >> $GITHUB_OUTPUT
