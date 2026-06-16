@@ -1,7 +1,7 @@
 name: agent_vault
 description: AgentVault - Track and manage your AI tool free trial accounts
 publish_to: 'none'
-version: 1.0.5+6
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
