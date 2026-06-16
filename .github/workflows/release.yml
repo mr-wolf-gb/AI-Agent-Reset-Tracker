@@ -123,10 +123,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Install CocoaPods dependencies
-        run: cd ios && pod install --repo-update
-        continue-on-error: true
-
       - name: Build iOS (no code signing)
         run: |
           flutter build ios --release --no-codesign \
@@ -161,11 +157,13 @@ jobs:
         with:
           name: android-build
           path: release-artifacts
+          merge-multiple: true
 
       - uses: actions/download-artifact@v4
         with:
           name: ios-build
           path: release-artifacts
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
