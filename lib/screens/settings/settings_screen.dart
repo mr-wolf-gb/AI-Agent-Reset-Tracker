@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -12,6 +13,10 @@ import '../../services/biometric_service.dart';
 import '../../providers/service_providers.dart';
 import '../../services/ai_ide_sync_service.dart';
 import '../../models/app_settings.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../providers/account_provider.dart';
+import '../../services/import_service.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/update_dialog.dart';
 
@@ -226,6 +231,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ]),
           const SizedBox(height: 16),
 
+          // --- Data Management ---
+          _SectionHeader('Data Management'),
+          _SettingsCard(children: [
+            ListTile(
+              leading: const Icon(Icons.file_download_outlined),
+              title: const Text('Import Accounts'),
+              subtitle: const Text('From JSON, CSV, or XML'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showImportOptions(),
+            ),
+          ]),
+          const SizedBox(height: 16),
+
           // --- About ---
           _SectionHeader('About'),
           _SettingsCard(children: [
@@ -404,6 +422,174 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final h = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
     final period = hour >= 12 ? 'PM' : 'AM';
     return '$h:00 $period';
+  }
+
+  void _showImportOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Import Accounts',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_open_outlined),
+              title: const Text('Import from Local File'),
+              subtitle: const Text('Supports .json, .csv, .xml'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _importFromFile();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.public_outlined),
+              title: const Text('Import from URL'),
+              subtitle: const Text('Enter a link to data file'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _importFromUrl();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _importFromFile() async {
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        final status = await Permission.storage.request();
+        if (status.isPermanentlyDenied) {
+          openAppSettings();
+          return;
+        }
+        if (!status.isGranted) {
+          _showError('Storage permission is required to import files');
+          return;
+        }
+      }
+
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json', 'csv', 'xml'],
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.first;
+      final path = file.path;
+      if (path == null) return;
+
+      final content = await File(path).readAsString();
+      final ext = file.extension?.toLowerCase() ??
+          path.split('.').last.toLowerCase();
+
+      _processImport(content, ext);
+    } catch (e) {
+      _showError('Failed to read file: $e');
+    }
+  }
+
+  Future<void> _importFromUrl() async {
+    final ctrl = TextEditingController();
+    final url = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Import from URL'),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.url,
+          decoration: const InputDecoration(
+            labelText: 'URL',
+            hintText: 'https://example.com/data.json',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+
+    if (url == null || url.isEmpty) return;
+
+    setState(() => _isSyncing = true); // Reusing sync spinner
+    try {
+      final importService = ref.read(importServiceProvider);
+      final content = await importService.fetchFromUrl(url);
+      if (content == null) {
+        _showError('Failed to fetch content from URL');
+        return;
+      }
+
+      final ext = url.split('?').first.split('.').last.toLowerCase();
+      _processImport(content, ext);
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
+  Future<void> _processImport(String content, String extension) async {
+    final importService = ref.read(importServiceProvider);
+    int count = 0;
+
+    try {
+      if (extension == 'json') {
+        count = await importService.importFromJson(content);
+      } else if (extension == 'csv') {
+        count = await importService.importFromCsv(content);
+      } else if (extension == 'xml') {
+        count = await importService.importFromXml(content);
+      } else {
+        // Try guessing by content if extension is weird
+        if (content.trim().startsWith('[')) {
+          count = await importService.importFromJson(content);
+        } else if (content.trim().startsWith('<')) {
+          count = await importService.importFromXml(content);
+        } else {
+          count = await importService.importFromCsv(content);
+        }
+      }
+
+      if (count > 0) {
+        ref.read(accountProvider.notifier).reload();
+        _showSuccess('Successfully imported $count accounts');
+      } else {
+        _showError('No accounts found or invalid format');
+      }
+    } catch (e) {
+      _showError('Import failed: $e');
+    }
+  }
+
+  void _showError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: AppColors.needsReset,
+    ));
+  }
+
+  void _showSuccess(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: AppColors.available,
+    ));
   }
 }
 

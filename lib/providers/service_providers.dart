@@ -5,6 +5,7 @@ import '../services/notification_service.dart';
 import '../services/update_service.dart';
 import '../services/ai_ide_sync_service.dart';
 import '../services/biometric_service.dart';
+import '../services/import_service.dart';
 
 final databaseServiceProvider = Provider<DatabaseService>(
   (ref) => DatabaseService(),
@@ -25,6 +26,11 @@ final updateServiceProvider = Provider<UpdateService>(
 final biometricServiceProvider = Provider<BiometricService>(
   (ref) => BiometricService(),
 );
+
+final importServiceProvider = Provider<ImportService>((ref) {
+  final db = ref.watch(databaseServiceProvider);
+  return ImportService(db);
+});
 
 final aiIdeSyncServiceProvider = Provider<AiIdeSyncService>((ref) {
   final db = ref.watch(databaseServiceProvider);
