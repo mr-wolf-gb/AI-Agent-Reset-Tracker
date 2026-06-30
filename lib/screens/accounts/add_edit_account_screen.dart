@@ -256,40 +256,42 @@ class _AddEditAccountScreenState extends ConsumerState<AddEditAccountScreen> {
 
               const _FieldLabel('Reset Time (Optional)'),
               const SizedBox(height: 6),
-              InkWell(
-                onTap: _pickResetTime,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.schedule,
-                          color: AppColors.textSecondary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _resetTime != null
-                              ? DateFormatter.formatDateTime(_resetTime!)
-                              : 'Tap to set reset time',
-                          style: TextStyle(
-                            color: _resetTime != null
-                                ? null
-                                : AppColors.textTertiary,
+              Material(
+                color: isDark ? AppColors.cardDark : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: const BorderSide(color: AppColors.borderLight),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: _pickResetTime,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.schedule,
+                            color: AppColors.textSecondary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _resetTime != null
+                                ? DateFormatter.formatDateTime(_resetTime!)
+                                : 'Tap to set reset time',
+                            style: TextStyle(
+                              color: _resetTime != null
+                                  ? null
+                                  : AppColors.textTertiary,
+                            ),
                           ),
                         ),
-                      ),
-                      if (_resetTime != null)
-                        GestureDetector(
-                          onTap: () => setState(() => _resetTime = null),
-                          child: const Icon(Icons.clear, size: 18),
-                        ),
-                    ],
+                        if (_resetTime != null)
+                          GestureDetector(
+                            onTap: () => setState(() => _resetTime = null),
+                            child: const Icon(Icons.clear, size: 18),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -378,16 +380,19 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+    return Material(
+      color: isDark ? AppColors.cardDark : Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+        side: BorderSide(
           color: isDark ? AppColors.borderDark : AppColors.borderLight,
         ),
       ),
-      child: child,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: child,
+      ),
     );
   }
 }

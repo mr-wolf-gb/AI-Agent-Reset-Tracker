@@ -9,15 +9,22 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 8 : 10,
         vertical: compact ? 3 : 5,
       ),
       decoration: BoxDecoration(
-        color: status.color.withValues(alpha: 0.15),
+        color: isDark
+            ? status.color.withValues(alpha: 0.15)
+            : status.lightColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: status.color.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: isDark
+              ? status.color.withValues(alpha: 0.4)
+              : status.color.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

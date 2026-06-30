@@ -11,6 +11,7 @@ import 'app.dart';
 import 'models/ai_ide.dart';
 import 'models/account.dart';
 import 'models/app_settings.dart';
+import 'models/usage_log.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -31,8 +32,18 @@ void main() async {
   // Initialize timezone
   tz.initializeTimeZones();
   try {
-    final currentTimezone = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(currentTimezone));
+    final dynamic timezoneData = await FlutterTimezone.getLocalTimezone();
+    String? name;
+    if (timezoneData is String) {
+      name = timezoneData;
+    } else {
+      name = timezoneData.identifier;
+    }
+    if (name != null) {
+      tz.setLocalLocation(tz.getLocation(name));
+    } else {
+      tz.setLocalLocation(tz.UTC);
+    }
   } catch (_) {
     tz.setLocalLocation(tz.UTC);
   }
@@ -45,11 +56,13 @@ void main() async {
   if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(AiIdeAdapter());
   if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(AccountAdapter());
   if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(AppSettingsAdapter());
+  if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(UsageLogAdapter());
 
   // Open Hive boxes
   await Hive.openBox<AiIde>('ai_ides');
   await Hive.openBox<Account>('accounts');
   await Hive.openBox<AppSettings>('app_settings');
+  await Hive.openBox<UsageLog>('usage_logs');
 
   // Initialize notification service
   await NotificationService.instance.initialize();

@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 import '../core/constants/color_constants.dart';
 
-enum AccountStatus { available, resetSoon, needsReset, inactive }
+enum AccountStatus { available, restricted, resetSoon, inactive }
 
 extension AccountStatusX on AccountStatus {
   int get sortOrder {
     switch (this) {
-      case AccountStatus.needsReset:
+      case AccountStatus.available:
         return 0;
       case AccountStatus.resetSoon:
         return 1;
-      case AccountStatus.available:
+      case AccountStatus.restricted:
         return 2;
       case AccountStatus.inactive:
         return 3;
@@ -21,12 +21,12 @@ extension AccountStatusX on AccountStatus {
 
   String get label {
     switch (this) {
-      case AccountStatus.needsReset:
-        return 'Needs Reset';
-      case AccountStatus.resetSoon:
-        return 'Resetting Soon';
       case AccountStatus.available:
         return 'Available';
+      case AccountStatus.resetSoon:
+        return 'Resetting Soon';
+      case AccountStatus.restricted:
+        return 'Restricted';
       case AccountStatus.inactive:
         return 'Inactive';
     }
@@ -34,25 +34,38 @@ extension AccountStatusX on AccountStatus {
 
   Color get color {
     switch (this) {
-      case AccountStatus.needsReset:
-        return AppColors.needsReset;
-      case AccountStatus.resetSoon:
-        return AppColors.resetSoon;
       case AccountStatus.available:
         return AppColors.available;
+      case AccountStatus.resetSoon:
+        return AppColors.resetSoon;
+      case AccountStatus.restricted:
+        return AppColors.needsReset;
       case AccountStatus.inactive:
         return AppColors.inactive;
     }
   }
 
+  Color get lightColor {
+    switch (this) {
+      case AccountStatus.available:
+        return AppColors.availableLight;
+      case AccountStatus.resetSoon:
+        return AppColors.resetSoonLight;
+      case AccountStatus.restricted:
+        return AppColors.needsResetLight;
+      case AccountStatus.inactive:
+        return AppColors.inactiveLight;
+    }
+  }
+
   IconData get icon {
     switch (this) {
-      case AccountStatus.needsReset:
-        return Icons.error_outline;
-      case AccountStatus.resetSoon:
-        return Icons.schedule;
       case AccountStatus.available:
         return Icons.check_circle_outline;
+      case AccountStatus.resetSoon:
+        return Icons.schedule;
+      case AccountStatus.restricted:
+        return Icons.error_outline;
       case AccountStatus.inactive:
         return Icons.pause_circle_outline;
     }
@@ -88,14 +101,14 @@ class Account {
     if (!isActive) return AccountStatus.inactive;
     if (resetTime == null) return AccountStatus.available;
     final now = DateTime.now();
-    if (now.isAfter(resetTime!)) return AccountStatus.needsReset;
+    if (now.isAfter(resetTime!)) return AccountStatus.available;
+    
     final diff = resetTime!.difference(now);
-    if (diff.inHours <= 24) return AccountStatus.resetSoon;
-    return AccountStatus.available;
+    if (diff.inHours <= 1) return AccountStatus.resetSoon;
+    return AccountStatus.restricted;
   }
 
-  bool get isAvailable =>
-      status == AccountStatus.available || status == AccountStatus.resetSoon;
+  bool get isAvailable => status == AccountStatus.available;
 
   Account copyWith({
     String? id,

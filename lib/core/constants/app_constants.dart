@@ -13,6 +13,7 @@ class AppConstants {
   static const String aiIdesBox = 'ai_ides';
   static const String accountsBox = 'accounts';
   static const String settingsBox = 'app_settings';
+  static const String usageLogsBox = 'usage_logs';
   static const String settingsKey = 'settings';
 
   // Secure storage keys

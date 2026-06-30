@@ -70,7 +70,7 @@ class DashboardScreen extends ConsumerWidget {
                       crossAxisCount: crossCount,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 1.0,
+                      childAspectRatio: 1.2,
                     ),
                   ),
                 ),
@@ -191,7 +191,7 @@ class _IdeSummaryCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 5),
               Text(
                 ide.name,
                 style: Theme.of(context)
@@ -209,19 +209,22 @@ class _IdeSummaryCard extends StatelessWidget {
                     _CountChip(
                         count: summary.availableCount,
                         color: AppColors.available,
+                        bgColor: isDark ? null : AppColors.availableLight,
                         icon: Icons.check_circle),
                   if (summary.resetSoonCount > 0) ...[
                     const SizedBox(width: 4),
                     _CountChip(
                         count: summary.resetSoonCount,
                         color: AppColors.resetSoon,
+                        bgColor: isDark ? null : AppColors.resetSoonLight,
                         icon: Icons.schedule),
                   ],
-                  if (summary.needsResetCount > 0) ...[
+                  if (summary.restrictedCount > 0) ...[
                     const SizedBox(width: 4),
                     _CountChip(
-                        count: summary.needsResetCount,
+                        count: summary.restrictedCount,
                         color: AppColors.needsReset,
+                        bgColor: isDark ? null : AppColors.needsResetLight,
                         icon: Icons.error_outline),
                   ],
                 ],
@@ -259,16 +262,22 @@ class _IdeSummaryCard extends StatelessWidget {
 class _CountChip extends StatelessWidget {
   final int count;
   final Color color;
+  final Color? bgColor;
   final IconData icon;
-  const _CountChip(
-      {required this.count, required this.color, required this.icon});
+  const _CountChip({
+    required this.count,
+    required this.color,
+    this.bgColor,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: bgColor ?? (isDark ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

@@ -435,14 +435,15 @@ class _SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
+    return Material(
+      color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+        side: BorderSide(
           color: isDark ? AppColors.borderDark : AppColors.borderLight,
         ),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(children: children),
     );
   }

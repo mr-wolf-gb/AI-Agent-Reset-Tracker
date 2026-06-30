@@ -72,8 +72,17 @@ The master list of AI tools lives at `assets/data/ai_ides.json` (bundled) and is
 https://raw.githubusercontent.com/mr-wolf-gb/AI-Agent-Reset-Tracker/main/assets/data/ai_ides.json
 ```
 
-To add a new AI tool to the master list:
-1. Add an entry to `assets/data/ai_ides.json`
+To add a new AI tool to the master list, include its reset configuration:
+1. Add an entry to `assets/data/ai_ides.json`:
+   ```json
+   {
+     "id": "new-tool",
+     "name": "New Tool",
+     "website": "...",
+     "reset_period_hours": 24,
+     "reset_presets": [3, 24]
+   }
+   ```
 2. Commit and push — users' apps will sync on next launch
 
 Custom IDEs added by users are never overwritten by sync (they have `isCustom: true`).

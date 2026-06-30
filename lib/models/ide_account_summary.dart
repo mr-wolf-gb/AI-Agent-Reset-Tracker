@@ -18,8 +18,9 @@ class IdeAccountSummary {
 
   DateTime? get nearestReset {
     DateTime? nearest;
+    final now = DateTime.now();
     for (final a in accounts) {
-      if (a.resetTime != null) {
+      if (a.resetTime != null && a.resetTime!.isAfter(now)) {
         if (nearest == null || a.resetTime!.isBefore(nearest)) {
           nearest = a.resetTime;
         }
@@ -32,8 +33,8 @@ class IdeAccountSummary {
       accounts.where((a) => a.status == AccountStatus.available).length;
   int get resetSoonCount =>
       accounts.where((a) => a.status == AccountStatus.resetSoon).length;
-  int get needsResetCount =>
-      accounts.where((a) => a.status == AccountStatus.needsReset).length;
+  int get restrictedCount =>
+      accounts.where((a) => a.status == AccountStatus.restricted).length;
   int get inactiveCount =>
       accounts.where((a) => a.status == AccountStatus.inactive).length;
   int get totalCount => accounts.length;

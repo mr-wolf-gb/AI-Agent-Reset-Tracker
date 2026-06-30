@@ -56,19 +56,9 @@ class _AiIdeListScreenState extends ConsumerState<AiIdeListScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextField(
                   onChanged: (v) => setState(() => _search = v),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Search AI tools...',
-                    prefixIcon: const Icon(Icons.search),
-                    fillColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.cardDark
-                            : Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 10),
+                    prefixIcon: Icon(Icons.search),
                   ),
                 ),
               ),
@@ -86,12 +76,7 @@ class _AiIdeListScreenState extends ConsumerState<AiIdeListScreen> {
                       label: Text(_filterLabel(f)),
                       selected: selected,
                       onSelected: (_) => setState(() => _filter = f),
-                      selectedColor: AppColors.accent,
-                      labelStyle: TextStyle(
-                        color: selected ? Colors.white : null,
-                        fontWeight:
-                            selected ? FontWeight.w600 : null,
-                      ),
+                      showCheckmark: false,
                     );
                   },
                 ),
@@ -178,8 +163,13 @@ class _IdeListTile extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: ide.typeColor.withValues(alpha: 0.12),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? ide.typeColor.withValues(alpha: 0.15)
+                  : ide.typeColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: ide.typeColor.withValues(alpha: 0.2),
+              ),
             ),
             child: Text(
               ide.typeLabel,
@@ -226,11 +216,17 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: isDark
+            ? color.withValues(alpha: 0.15)
+            : color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+        ),
       ),
       child: Text(
         label,

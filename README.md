@@ -6,16 +6,16 @@ AgentVault is a production-ready Flutter application for tracking free trial acc
 
 ## Features
 
-- 🔐 **Secure Credential Storage** — Passwords encrypted with platform keychain/keystore via flutter_secure_storage
-- 📊 **Smart Dashboard** — IDE cards sorted by urgency (needs reset → resetting soon → available)
-- ⏰ **Push Notifications** — Configurable alerts before account resets (15min to 1 day advance)
-- 🔄 **Auto-Sync** — AI IDE list fetched from configurable JSON URL, with offline fallback to bundled assets
-- 🛡️ **Biometric Lock** — Face ID / fingerprint app protection via local_auth
-- 🌐 **20+ Pre-loaded AI Tools** — Cursor, Windsurf, Bolt.new, Claude.ai, ChatGPT, and more
-- 📱 **Responsive** — Adaptive grid layout for mobile (2-col), tablet (3-col), and desktop (4-col)
-- 🌙 **Dark Mode** — Full light/dark theme (deep navy + electric blue palette)
-- 🔃 **Auto-Updates** — Checks GitHub releases, one-tap APK install on Android
-- 📴 **Offline First** — All data accessible without internet (Hive local database)
+- 🔐 **Secure Credential Storage** — Passwords encrypted with platform keychain/keystore via flutter_secure_storage.
+- 🚀 **One-Tap Launch** — Rocket action to copy credentials and instantly launch the AI tool's website.
+- 📊 **Smart Dashboard** — At-a-glance view of available vs. restricted accounts, sorted by reset urgency.
+- ⏰ **Background Reset Alerts** — Get notified the **exact second** an account is ready to use again.
+- 🔄 **Multi-Rule Reset Tracking** — Handle complex limits (e.g., 3-hour vs 24-hour) with custom reset presets.
+- 📈 **Usage History** — Detailed logs of when limits were hit and when accounts were reset.
+- 🔄 **Auto-Sync** — AI IDE catalog fetched from configurable JSON URL with offline fallback.
+- 🛡️ **Biometric Lock** — Face ID / fingerprint app protection via local_auth.
+- 🌐 **20+ Pre-loaded AI Tools** — Pre-configured reset periods for Claude, Cursor, ChatGPT, and more.
+- 🌙 **Adaptive UI** — Full light/dark theme with responsive grid for all device sizes.
 
 ## Screenshots
 
@@ -75,10 +75,16 @@ The app fetches its AI tools list from a configurable URL (default: this repo's 
     "website": "https://tool.com",
     "icon_url": "https://tool.com/favicon.ico",
     "type": "web-app",
-    "description": "Brief description"
+    "description": "Brief description",
+    "reset_period_hours": 24,
+    "reset_presets": [3, 24, 720]
   }
 ]
 ```
+
+**Fields**:
+- `reset_period_hours`: Default time (in hours) added when "Hit Limit" is tapped.
+- `reset_presets`: Optional list of common reset intervals for tools with multiple limit tiers.
 
 **Supported types**: `desktop-ide`, `web-app`, `web-ide`, `plugin`, `cli`, `api`
 
@@ -92,7 +98,7 @@ lib/
 │   ├── constants/    # AppConstants, AppColors
 │   ├── theme/        # Light + dark ThemeData
 │   └── utils/        # DateFormatter, Validators
-├── models/           # AiIde, Account, AppSettings, UpdateInfo (+ Hive TypeAdapters)
+├── models/           # AiIde, Account, AppSettings, UsageLog, UpdateInfo (+ Hive TypeAdapters)
 ├── services/         # DatabaseService, SecureStorageService, NotificationService,
 │                     # UpdateService, AiIdeSyncService, BiometricService
 ├── providers/        # Riverpod StateNotifierProviders

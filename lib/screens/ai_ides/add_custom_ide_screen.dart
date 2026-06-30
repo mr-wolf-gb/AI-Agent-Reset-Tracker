@@ -21,6 +21,10 @@ class _AddCustomIdeScreenState extends ConsumerState<AddCustomIdeScreen> {
   final _websiteCtrl = TextEditingController();
   final _iconUrlCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _resetPeriodCtrl = TextEditingController();
+  final _presetsCtrl = TextEditingController();
+
+
   String _type = 'web-app';
   bool _isSaving = false;
 
@@ -39,6 +43,10 @@ class _AddCustomIdeScreenState extends ConsumerState<AddCustomIdeScreen> {
     _websiteCtrl.dispose();
     _iconUrlCtrl.dispose();
     _descCtrl.dispose();
+    _resetPeriodCtrl.dispose();
+    _presetsCtrl.dispose();
+
+
     super.dispose();
   }
 
@@ -54,6 +62,13 @@ class _AddCustomIdeScreenState extends ConsumerState<AddCustomIdeScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
     try {
+      final presets = _presetsCtrl.text
+          .split(',')
+          .map((e) => int.tryParse(e.trim()))
+          .where((e) => e != null)
+          .cast<int>()
+          .toList();
+
       final ide = AiIde(
         id: const Uuid().v4(),
         name: _nameCtrl.text.trim(),
@@ -66,6 +81,8 @@ class _AddCustomIdeScreenState extends ConsumerState<AddCustomIdeScreen> {
         description: _descCtrl.text.trim().isEmpty
             ? null
             : _descCtrl.text.trim(),
+        resetPeriodHours: int.tryParse(_resetPeriodCtrl.text.trim()),
+        resetPresets: presets.isEmpty ? null : presets,
       );
       await ref.read(aiIdeProvider.notifier).addCustomIde(ide);
       if (!mounted) return;
@@ -179,6 +196,46 @@ class _AddCustomIdeScreenState extends ConsumerState<AddCustomIdeScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              TextFormField(
+                controller: _resetPeriodCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Reset Period (Hours)',
+                  prefixIcon: Icon(Icons.timer_outlined),
+                  hintText: 'e.g. 24',
+                ),
+                validator: (v) {
+                  if (v != null && v.isNotEmpty && int.tryParse(v) == null) {
+                    return 'Must be a number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
+
+              TextFormField(
+                controller: _presetsCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Reset Presets (Hours, comma separated)',
+                  prefixIcon: Icon(Icons.list_alt_outlined),
+                  hintText: 'e.g. 3, 24, 168',
+                ),
+                validator: (v) {
+                  if (v != null && v.isNotEmpty) {
+                    final parts = v.split(',');
+                    for (final p in parts) {
+                      if (p.trim().isNotEmpty && int.tryParse(p.trim()) == null) {
+                        return 'All values must be numbers';
+                      }
+                    }
+                  }
+                  return null;
+                },
+              ),
+
+
               const SizedBox(height: 28),
 
               ElevatedButton(

@@ -17,6 +17,8 @@ AgentVault uses **Hive** for local offline-first storage. No SQLite, no raw quer
 | isRemoved | bool | `true` if removed from master JSON list (accounts still shown) |
 | updatedAt | DateTime | Last sync/update timestamp |
 | description | String? | Optional short description |
+| resetPeriodHours | int? | Default reset time in hours |
+| resetPresets | List<int>? | Common reset intervals for this tool |
 
 **Sync behavior**: On sync, non-custom IDEs are updated from the master list. IDEs absent from master list are marked `isRemoved = true`. Accounts for removed IDEs display "Unknown AI IDE" but are never deleted.
 
@@ -46,9 +48,21 @@ AgentVault uses **Hive** for local offline-first storage. No SQLite, no raw quer
 |-----------|--------|-------|
 | `isActive = false` | Inactive | Grey |
 | `resetTime = null` | Available | Green |
-| `resetTime` in the past | Needs Reset | Red |
-| `resetTime` within 24h | Resetting Soon | Amber |
-| `resetTime` > 24h away | Available | Green |
+| `resetTime` <= now | Available | Green |
+| `resetTime` - now <= 1h | Resetting Soon | Amber |
+| `resetTime` - now > 1h | Restricted | Red |
+
+---
+
+### `usage_logs` — `Box<UsageLog>` (TypeAdapter typeId = 3)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | String | UUID v4 |
+| accountId | String | Foreign key → Account.id |
+| timestamp | DateTime | When the action occurred |
+| action | String | `limit_hit` or `manual_reset` |
+| durationHours | int? | The reset period applied (if limit hit) |
 
 ---
 
@@ -86,11 +100,17 @@ Single object stored at key `settings`.
 
 ## Notification Scheduling
 
-Each account with `notificationEnabled = true` and a non-null `resetTime` gets a scheduled local notification:
-- Fires at: `resetTime - notificationAdvanceMinutes`
-- Notification ID: `accountId.hashCode.abs()` (stable, unique per account)
-- Payload: `"accountId:ideId"` (for future deep link navigation)
-- Rescheduled on: account save, settings change, app restart
+Each account with `notificationEnabled = true` and a non-null `resetTime` in the future gets:
+
+1.  **Reset Ready Notification**:
+    *   Fires at: Exactly `resetTime`
+    *   Notification ID: `accountId.hashCode.abs()`
+2.  **Advance Warning (Optional)**:
+    *   Fires at: `resetTime - notificationAdvanceMinutes`
+    *   Notification ID: `accountId.hashCode.abs() + 1000000`
+
+*   **Payload**: `"accountId:ideId"`
+*   **Rescheduled on**: Account "Hit Limit", manual reset, app restart, or settings change.
 
 ---
 

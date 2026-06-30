@@ -52,13 +52,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _setStatus('Requesting permissions...');
     await _requestPermissions();
 
+    if (!mounted) return;
+
     // 2. Sync AI IDEs
     _setStatus('Loading AI tools...');
     final settings = ref.read(settingsProvider);
     final syncService = ref.read(aiIdeSyncServiceProvider);
     await syncService.sync(settings.aiIdeListUrl);
+
+    if (!mounted) return;
+
     ref.read(aiIdeProvider.notifier).reload();
     await ref.read(settingsProvider.notifier).updateLastAiIdeSync();
+
+    if (!mounted) return;
 
     // 3. Check for app updates
     _setStatus('Checking for updates...');
@@ -67,10 +74,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       await ref.read(updateProvider.notifier).check(info.version);
     } catch (_) {}
 
+    if (!mounted) return;
+
     // 4. Mark onboarding complete on first run
     if (!settings.hasCompletedOnboarding) {
       await ref.read(settingsProvider.notifier).setOnboardingComplete();
     }
+
+    if (!mounted) return;
 
     _setStatus('Ready!');
     await Future.delayed(const Duration(milliseconds: 400));

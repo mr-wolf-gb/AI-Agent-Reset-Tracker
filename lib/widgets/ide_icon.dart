@@ -36,22 +36,23 @@ class _FallbackIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = ide.isRemoved ? AppColors.unknown : ide.typeColor;
     final letter = ide.name.isNotEmpty ? ide.name[0].toUpperCase() : '?';
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: isDark ? color.withValues(alpha: 0.2) : color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Center(
         child: Text(
           letter,
           style: TextStyle(
-            fontSize: size * 0.4,
-            fontWeight: FontWeight.w700,
+            fontSize: size * 0.45,
+            fontWeight: FontWeight.w800,
             color: color,
           ),
         ),

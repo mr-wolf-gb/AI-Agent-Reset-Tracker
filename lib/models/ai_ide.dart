@@ -12,6 +12,8 @@ class AiIde {
   final bool isRemoved;
   final DateTime updatedAt;
   final String? description;
+  final int? resetPeriodHours;
+  final List<int>? resetPresets;
 
   const AiIde({
     required this.id,
@@ -23,6 +25,8 @@ class AiIde {
     this.isRemoved = false,
     required this.updatedAt,
     this.description,
+    this.resetPeriodHours,
+    this.resetPresets,
   });
 
   factory AiIde.unknown(String id) => AiIde(
@@ -47,6 +51,10 @@ class AiIde {
             ? DateTime.tryParse(json['updated_at'] as String) ?? DateTime.now()
             : DateTime.now(),
         description: json['description'] as String?,
+        resetPeriodHours: json['reset_period_hours'] as int?,
+        resetPresets: (json['reset_presets'] as List<dynamic>?)
+            ?.map((e) => e as int)
+            .toList(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +67,8 @@ class AiIde {
         'is_removed': isRemoved,
         'updated_at': updatedAt.toIso8601String(),
         'description': description,
+        'reset_period_hours': resetPeriodHours,
+        'reset_presets': resetPresets,
       };
 
   AiIde copyWith({
@@ -71,6 +81,8 @@ class AiIde {
     bool? isRemoved,
     DateTime? updatedAt,
     String? description,
+    int? resetPeriodHours,
+    List<int>? resetPresets,
   }) =>
       AiIde(
         id: id ?? this.id,
@@ -82,6 +94,8 @@ class AiIde {
         isRemoved: isRemoved ?? this.isRemoved,
         updatedAt: updatedAt ?? this.updatedAt,
         description: description ?? this.description,
+        resetPeriodHours: resetPeriodHours ?? this.resetPeriodHours,
+        resetPresets: resetPresets ?? this.resetPresets,
       );
 
   String get typeLabel {
@@ -150,12 +164,14 @@ class AiIdeAdapter extends TypeAdapter<AiIde> {
       isRemoved: fields[6] as bool? ?? false,
       updatedAt: fields[7] as DateTime? ?? DateTime.now(),
       description: fields[8] as String?,
+      resetPeriodHours: fields[9] as int?,
+      resetPresets: (fields[10] as List<dynamic>?)?.cast<int>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, AiIde obj) {
-    writer.writeByte(9);
+    writer.writeByte(11);
     writer.writeByte(0);
     writer.write(obj.id);
     writer.writeByte(1);
@@ -174,5 +190,9 @@ class AiIdeAdapter extends TypeAdapter<AiIde> {
     writer.write(obj.updatedAt);
     writer.writeByte(8);
     writer.write(obj.description);
+    writer.writeByte(9);
+    writer.write(obj.resetPeriodHours);
+    writer.writeByte(10);
+    writer.write(obj.resetPresets);
   }
 }

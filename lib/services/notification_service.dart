@@ -66,47 +66,80 @@ class NotificationService {
   Future<void> scheduleResetNotification({
     required Account account,
     required AiIde ide,
-    required int advanceMinutes,
+    int advanceMinutes = 0,
   }) async {
     if (account.resetTime == null) return;
-    final notifyAt =
-        account.resetTime!.subtract(Duration(minutes: advanceMinutes));
-    if (notifyAt.isBefore(DateTime.now())) return;
-
-    final timeStr = DateFormat.jm().format(account.resetTime!);
-    final advLabel = advanceMinutes >= 60
-        ? '${advanceMinutes ~/ 60}h'
-        : '${advanceMinutes}m';
-
-    await _plugin.zonedSchedule(
-      account.id.hashCode.abs(),
-      '${ide.name} resets in $advLabel',
-      '${account.email} resets at $timeStr — get ready!',
-      tz.TZDateTime.from(notifyAt, tz.local),
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          AppConstants.notificationChannelId,
-          AppConstants.notificationChannelName,
-          channelDescription: AppConstants.notificationChannelDesc,
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+    
+    // 1. Ready Notification (At exactly resetTime)
+    final readyAt = account.resetTime!;
+    if (readyAt.isAfter(DateTime.now())) {
+      await _plugin.zonedSchedule(
+        account.id.hashCode.abs(),
+        '${ide.name} Account Ready!',
+        '${account.email} has been reset and is ready to use.',
+        tz.TZDateTime.from(readyAt, tz.local),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            AppConstants.notificationChannelId,
+            AppConstants.notificationChannelName,
+            channelDescription: AppConstants.notificationChannelDesc,
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: '${account.id}:${account.aiIdeId}',
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: '${account.id}:${account.aiIdeId}',
+      );
+    }
+
+    // 2. Advance Notification (optional)
+    if (advanceMinutes > 0) {
+      final notifyAt =
+          account.resetTime!.subtract(Duration(minutes: advanceMinutes));
+      if (notifyAt.isAfter(DateTime.now())) {
+        final advLabel = advanceMinutes >= 60
+            ? '${advanceMinutes ~/ 60}h'
+            : '${advanceMinutes}m';
+        
+        await _plugin.zonedSchedule(
+          account.id.hashCode.abs() + 1000000, // Unique ID
+          '${ide.name} resets in $advLabel',
+          '${account.email} resets soon — get ready!',
+          tz.TZDateTime.from(notifyAt, tz.local),
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              AppConstants.notificationChannelId,
+              AppConstants.notificationChannelName,
+              channelDescription: AppConstants.notificationChannelDesc,
+              importance: Importance.defaultImportance,
+              priority: Priority.defaultPriority,
+            ),
+            iOS: const DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: '${account.id}:${account.aiIdeId}',
+        );
+      }
+    }
   }
 
   Future<void> cancelNotification(String accountId) async {
-    await _plugin.cancel(accountId.hashCode.abs());
+    final baseId = accountId.hashCode.abs();
+    await _plugin.cancel(baseId);
+    await _plugin.cancel(baseId + 1000000);
   }
 
   Future<void> cancelAll() async {

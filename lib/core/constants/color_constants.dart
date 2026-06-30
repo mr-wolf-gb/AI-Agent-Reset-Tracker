@@ -16,10 +16,15 @@ class AppColors {
 
   // Status colors
   static const Color available = Color(0xFF10B981);
+  static const Color availableLight = Color(0xFFD1FAE5);
   static const Color resetSoon = Color(0xFFF59E0B);
+  static const Color resetSoonLight = Color(0xFFFEF3C7);
   static const Color needsReset = Color(0xFFEF4444);
+  static const Color needsResetLight = Color(0xFFFEE2E2);
   static const Color inactive = Color(0xFF94A3B8);
+  static const Color inactiveLight = Color(0xFFF1F5F9);
   static const Color unknown = Color(0xFF64748B);
+  static const Color unknownLight = Color(0xFFE2E8F0);
 
   // Text
   static const Color textPrimary = Color(0xFF0F172A);
